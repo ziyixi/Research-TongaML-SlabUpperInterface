@@ -1,0 +1,18 @@
+{
+  "notebook.formatOnSave.enabled": true,
+  "notebook.codeActionsOnSave": {
+    "notebook.source.fixAll": "explicit",
+    "notebook.source.organizeImports": "explicit"
+  },
+  "editor.formatOnSave": true,
+  "ruff.nativeServer": true,
+  "python.languageServer": "Pylance",
+  "editor.codeActionsOnSave": {
+    // "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.defaultFormatter": "charliermarsh.ruff",
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+}

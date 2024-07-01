@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "fit-surface"
+version = "0.1.0"
+description = ""
+authors = ["Ziyi Xi <ziyixi@mail.ustc.edu.cn>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^2.0.0"
+pandas = "^2.2.2"
+pygmt = "^0.12.0"
+pyproj = "^3.6.1"
+obspy = "^1.4.1"
+xarray = "^2024.6.0"
+scipy = "^1.14.0"
+loguru = "^0.7.2"
+cvxpy = "^1.5.2"
+tqdm = "^4.66.4"
+joblib = "^1.4.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
