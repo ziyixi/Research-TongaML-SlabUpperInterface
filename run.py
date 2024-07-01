@@ -70,20 +70,7 @@ def main():
     slab_model = xr.open_dataset(
         resource(["slab2", "ker_slab2_depth.grd"], normal_path=True)
     )
-    # for i, row in tqdm(
-    #     lines.iterrows(), total=len(lines), desc="Fitting slab interface"
-    # ):
-    #     line = [list(row["Start"]), list(row["End"])]
-    #     slab_interfaces.append(
-    #         determine_slab_interface(
-    #             i,
-    #             projected_events[i],
-    #             zero_depth_positions[i],
-    #             line,
-    #             config.LENGTH_DEG,
-    #             slab_model=slab_model,
-    #         )
-    #     )
+
     rows = list(lines.iterrows())
     slab_interfaces = Parallel(n_jobs=-1)(
         delayed(process_row_for_slab_interface)(

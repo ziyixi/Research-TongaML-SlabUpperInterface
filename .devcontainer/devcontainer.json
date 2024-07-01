@@ -20,7 +20,8 @@
 				"ms-toolsai.jupyter",
 				"mhutchie.git-graph",
 				"charliermarsh.ruff",
-				"ms-python.vscode-pylance"
+				"ms-python.vscode-pylance",
+				"adam-bender.commit-message-editor"
 			]
 		}
 	},
