@@ -8,9 +8,15 @@ EVENTS_REMOVE_DIST = [250, 400, 600]  # distance of the events to remove
 
 CURVE_FIT_RATIO = 0.2  # ratio of the curve fit
 
-TOTAL_LINES = 2000  # total number of lines
-PLOT_STEP = 200  # plot step
-SMOOTHING_SIGMA = 10.0  # smoothing sigma
-# TOTAL_LINES = 10  # total number of lines
-# PLOT_STEP = 1  # plot step
-# SMOOTHING_SIGMA = 1.0  # smoothing sigma
+# TOTAL_LINES = 2000  # total number of lines
+# PLOT_STEP = 200  # plot step
+# SMOOTHING_SIGMA = 10.0  # smoothing sigma
+TOTAL_LINES = 10  # total number of lines
+PLOT_STEP = 1  # plot step
+SMOOTHING_SIGMA = 1.0  # smoothing sigma
+
+MANUAL_FIT = True  # manual fit using data/manual_modify/slab_fit.csv
+MINLAT, MAXLAT, MINLON, MAXLON = -26, -14, 176, 188
+GRID_STEP = 0.1
+
+XARRAY_SAVE_NAME = "tonga_slab_interface.nc"

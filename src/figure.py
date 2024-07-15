@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -17,6 +17,7 @@ def plot_figure(
     line: Tuple[Tuple[float, float], Tuple[float, float]],
     line_length_in_deg: float,
     catalog: pd.DataFrame,
+    final_fitted_interface: Optional[xr.DataArray] = None,
 ):
     start, end = line
     startlat, startlon = start
@@ -37,7 +38,7 @@ def plot_figure(
     title = f"Slab Interface along ({startlat:.2f}, {startlon:.2f}) to ({endlat:.2f}, {endlon:.2f})"
     fig.basemap(
         projection="X4i/-4i",
-        frame=[f"+t{title}", "xaf+lDistance (km)", "yaf+lDepth (km)"],
+        frame=[f"+t{title}", "xafg20+lDistance (km)", "yafg20+lDepth (km)"],
         region=[
             0,
             line_length_in_deg * degrees2kilometers(1),
@@ -51,12 +52,33 @@ def plot_figure(
         style="c0.08c",
         pen="0.01c,black",
     )
-    fig.plot(
-        x=slab_interface[0],
-        y=slab_interface[1],
-        pen="1.5p,red",
-        label="Fitted Slab Interface",
-    )
+    if final_fitted_interface is None:
+        fig.plot(
+            x=slab_interface[0],
+            y=slab_interface[1],
+            pen="1.5p,red",
+            label="Fitted Slab Interface",
+        )
+    else:
+        points = pygmt.project(
+            center=[startlon, startlat],
+            endpoint=[endlon, endlat],
+            generate=0.02,
+        )
+        lons = points.r
+        lons[lons < 0] += 360
+        lats = points.s
+        slab_deps = slab_interp(final_fitted_interface, lons, lats)
+        fig.plot(
+            x=np.linspace(
+                0,
+                line_length_in_deg * degrees2kilometers(1),
+                len(slab_deps),
+            ),
+            y=slab_deps,
+            pen="1.5p,red",
+            label="Fitted Slab Interface",
+        )
 
     points = pygmt.project(
         center=[startlon, startlat],

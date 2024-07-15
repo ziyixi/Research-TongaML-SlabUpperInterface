@@ -21,7 +21,8 @@
 				"mhutchie.git-graph",
 				"charliermarsh.ruff",
 				"ms-python.vscode-pylance",
-				"adam-bender.commit-message-editor"
+				"adam-bender.commit-message-editor",
+				"mechatroner.rainbow-csv"
 			]
 		}
 	},
