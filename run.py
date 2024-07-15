@@ -9,6 +9,7 @@ import src.config as config
 from src import resource
 from src.figure import plot_figure
 from src.fit import determine_slab_interface
+from src.manual_fit import fit_slab_interface_manually
 from src.smooth_slab import smooth_across_sublists
 from src.utils import (
     find_slab_zero_depth_position,
@@ -66,32 +67,38 @@ def main():
             project_catalog(events, line, line_length_in_deg=config.LENGTH_DEG)
         )
 
-    # slab_interfaces = []
-    slab_model = xr.open_dataset(
-        resource(["slab2", "ker_slab2_depth.grd"], normal_path=True)
-    )
-
-    rows = list(lines.iterrows())
-    slab_interfaces = Parallel(n_jobs=-1)(
-        delayed(process_row_for_slab_interface)(
-            i,
-            row,
-            projected_events,
-            zero_depth_positions,
-            slab_model,
-            config.LENGTH_DEG,
+    if not config.MANUAL_FIT:
+        slab_model = xr.open_dataset(
+            resource(["slab2", "ker_slab2_depth.grd"], normal_path=True)
         )
-        for i, row in tqdm(rows, total=len(rows), desc="Fitting slab interface")
-    )
 
-    # smoothing the slab interface
-    smoothed = smooth_across_sublists(
-        [slab_interface[1] for slab_interface in slab_interfaces],
-        smoothing_sigma=config.SMOOTHING_SIGMA,
-    )
-    slab_interfaces = [
-        [slab_interfaces[i][0], smoothed[i]] for i in range(len(slab_interfaces))
-    ]
+        rows = list(lines.iterrows())
+        slab_interfaces = Parallel(n_jobs=-1)(
+            delayed(process_row_for_slab_interface)(
+                i,
+                row,
+                projected_events,
+                zero_depth_positions,
+                slab_model,
+                config.LENGTH_DEG,
+            )
+            for i, row in tqdm(rows, total=len(rows), desc="Fitting slab interface")
+        )
+
+        # smoothing the slab interface
+        smoothed = smooth_across_sublists(
+            [slab_interface[1] for slab_interface in slab_interfaces],
+            smoothing_sigma=config.SMOOTHING_SIGMA,
+        )
+        slab_interfaces = [
+            [slab_interfaces[i][0], smoothed[i]] for i in range(len(slab_interfaces))
+        ]
+    else:
+        depths_df = pd.read_csv(
+            resource(["manual_modify", "slab_fit.csv"], normal_path=True)
+        )
+        final_fitted_interface = fit_slab_interface_manually(lines, depths_df)
+        slab_interfaces = [None for _ in range(len(lines))]
 
     for i, row in lines.iterrows():
         if i % config.PLOT_STEP == 0:
@@ -103,7 +110,18 @@ def main():
                 line,
                 config.LENGTH_DEG,
                 events,
+                final_fitted_interface,
             )
+
+    # for final_fitted_interface, rename x to longitude, y to latitude, and z to depth
+    final_fitted_interface = final_fitted_interface.rename(
+        {"x": "longitude", "y": "latitude", "z": "depth"}
+    )
+    # multiply -1 to depth
+    final_fitted_interface["depth"] *= -1
+
+    # save the final fitted interface
+    final_fitted_interface.to_netcdf(config.XARRAY_SAVE_NAME)
 
 
 if __name__ == "__main__":
