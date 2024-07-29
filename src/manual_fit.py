@@ -113,14 +113,14 @@ def fit_slab_interface_manually(coords_df, depths_df):
         # longitudes = [p[1] for p in points]
 
         # Interpolate depths along each line
-        f = UnivariateSpline(depth_levels[: len(distances)], distances, k=3, s=0)
+        f = UnivariateSpline(depth_levels[: len(distances)], distances, k=3, s=None)
         max_depth = np.max(depth_levels[: len(distances)])
         dense_depth = np.linspace(0, max_depth, max_depth + 1)
         interpolated_distances = f(dense_depth)
 
-        if line_idx == 5:
-            for ipt in range(420, 701):
-                interpolated_distances[ipt] -= (ipt - 400) / 20
+        # if line_idx == 5:
+        #     for ipt in range(420, 701):
+        #         interpolated_distances[ipt] -= (ipt - 400) / 20
 
         dense_points = interpolate_points_along_line(start, end, interpolated_distances)
         dense_latitudes = [p[0] for p in dense_points]
@@ -144,11 +144,11 @@ def fit_slab_interface_manually(coords_df, depths_df):
         (all_longitudes, all_latitudes),
         all_depths,
         (grid_lon, grid_lat),
-        method="nearest",
+        method="nearby",
     )
 
     # Apply Gaussian smoothing
-    grid_depth = gaussian_filter(grid_depth, sigma=1)
+    # grid_depth = gaussian_filter(grid_depth, sigma=1)
 
     # Create xarray DataArray
     # slab_interface = xr.DataArray(
@@ -166,33 +166,33 @@ def fit_slab_interface_manually(coords_df, depths_df):
     slab_interface = slab_interface.where(slab_interface.z > -700)
     # print(slab_interface)
 
-    def constrain_nans(ds, var_name="z"):
-        da = ds[var_name]  # Extract the DataArray
-        values = da.values  # Convert DataArray to numpy array
-        for i in range(values.shape[0]):  # Iterate over each latitude (y)
-            x_vals = values[i, :]  # Get all longitudes for the specific latitude
+    # def constrain_nans(ds, var_name="z"):
+    #     da = ds[var_name]  # Extract the DataArray
+    #     values = da.values  # Convert DataArray to numpy array
+    #     for i in range(values.shape[0]):  # Iterate over each latitude (y)
+    #         x_vals = values[i, :]  # Get all longitudes for the specific latitude
 
-            # Find the index of the maximum non-NaN longitude
-            valid_indices = np.where(~np.isnan(x_vals))[0]
-            if valid_indices.size == 0:
-                continue  # Skip if all values are NaN
-            max_non_nan_index = valid_indices[-1]
+    #         # Find the index of the maximum non-NaN longitude
+    #         valid_indices = np.where(~np.isnan(x_vals))[0]
+    #         if valid_indices.size == 0:
+    #             continue  # Skip if all values are NaN
+    #         max_non_nan_index = valid_indices[-1]
 
-            # Set all previous values to NaN if they are NaN
-            if max_non_nan_index < len(x_vals) - 1:
-                for j in range(max_non_nan_index):
-                    if np.isnan(x_vals[j]):
-                        x_vals[: j + 1] = np.nan
+    #         # Set all previous values to NaN if they are NaN
+    #         if max_non_nan_index < len(x_vals) - 1:
+    #             for j in range(max_non_nan_index):
+    #                 if np.isnan(x_vals[j]):
+    #                     x_vals[: j + 1] = np.nan
 
-            values[i, :] = x_vals  # Update the numpy array with constrained values
+    #         values[i, :] = x_vals  # Update the numpy array with constrained values
 
-        # Update the Dataset with the constrained values
-        ds[var_name] = xr.DataArray(
-            values, coords=da.coords, dims=da.dims, name=da.name
-        )
-        return ds
+    #     # Update the Dataset with the constrained values
+    #     ds[var_name] = xr.DataArray(
+    #         values, coords=da.coords, dims=da.dims, name=da.name
+    #     )
+    #     return ds
 
-    slab_interface = constrain_nans(slab_interface)
+    # slab_interface = constrain_nans(slab_interface)
 
     # print(slab_interface)
 
