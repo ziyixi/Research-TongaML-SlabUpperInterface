@@ -12,6 +12,7 @@ from src.fit import determine_slab_interface
 from src.manual_fit import fit_slab_interface_manually
 from src.smooth_slab import smooth_across_sublists
 from src.utils import (
+    extend_line,
     find_slab_zero_depth_position,
     generate_perpendicular_lines,
     project_catalog,
@@ -67,6 +68,16 @@ def main():
             project_catalog(events, line, line_length_in_deg=config.LENGTH_DEG)
         )
 
+    extra_projected_events = []
+    for startlon, startlat, endlon, endlat in config.EXTRA_LINES:
+        endlon, endlat = extend_line(
+            [startlon, startlat], [endlon, endlat], config.LENGTH_DEG
+        )
+        line = [(startlat, startlon), (endlat, endlon)]
+        extra_projected_events.append(
+            project_catalog(events, line, line_length_in_deg=config.LENGTH_DEG)
+        )
+
     if not config.MANUAL_FIT:
         slab_model = xr.open_dataset(
             resource(["slab2", "ker_slab2_depth.grd"], normal_path=True)
@@ -112,6 +123,22 @@ def main():
                 events,
                 final_fitted_interface,
             )
+
+    for i, projected_event in enumerate(extra_projected_events):
+        startlon, startlat, endlon, endlat = config.EXTRA_LINES[i]
+        endlon, endlat = extend_line(
+            [startlon, startlat], [endlon, endlat], config.LENGTH_DEG
+        )
+        line = [(startlat, startlon), (endlat, endlon)]
+        plot_figure(
+            f"extra_{i}",
+            projected_event,
+            None,
+            line,
+            config.LENGTH_DEG,
+            events,
+            final_fitted_interface,
+        )
 
     # for final_fitted_interface, rename x to longitude, y to latitude, and z to depth
     final_fitted_interface = final_fitted_interface.rename(

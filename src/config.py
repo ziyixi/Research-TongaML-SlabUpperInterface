@@ -20,3 +20,9 @@ MINLAT, MAXLAT, MINLON, MAXLON = -26, -14, 176, 188
 GRID_STEP = 0.1
 
 XARRAY_SAVE_NAME = "tonga_slab_interface.nc"
+
+# extra plotting lines
+EXTRA_LINES = [
+    [-177.5, -17, -181.5, -23],
+    [179.0, -19, -176.5, -19],
+]

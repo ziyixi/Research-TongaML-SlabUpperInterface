@@ -118,6 +118,10 @@ def fit_slab_interface_manually(coords_df, depths_df):
         dense_depth = np.linspace(0, max_depth, max_depth + 1)
         interpolated_distances = f(dense_depth)
 
+        if line_idx == 5:
+            for ipt in range(420, 701):
+                interpolated_distances[ipt] -= (ipt - 400) / 20
+
         dense_points = interpolate_points_along_line(start, end, interpolated_distances)
         dense_latitudes = [p[0] for p in dense_points]
         dense_longitudes = [p[1] for p in dense_points]
@@ -135,7 +139,7 @@ def fit_slab_interface_manually(coords_df, depths_df):
     )
     grid_lon, grid_lat = np.meshgrid(grid_lon, grid_lat)
 
-    # Perform cubic interpolation on the grid
+    # Perform nearest interpolation on the grid
     grid_depth = griddata(
         (all_longitudes, all_latitudes),
         all_depths,
