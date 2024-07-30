@@ -69,14 +69,17 @@ def main():
         )
 
     extra_projected_events = []
+    extra_lines = []
     for startlon, startlat, endlon, endlat in config.EXTRA_LINES:
         endlon, endlat = extend_line(
             [startlon, startlat], [endlon, endlat], config.LENGTH_DEG
         )
         line = [(startlat, startlon), (endlat, endlon)]
+        extra_lines.append(line)
         extra_projected_events.append(
             project_catalog(events, line, line_length_in_deg=config.LENGTH_DEG)
         )
+    extra_lines = pd.DataFrame(extra_lines, columns=["Start", "End"])
 
     if not config.MANUAL_FIT:
         slab_model = xr.open_dataset(
@@ -108,7 +111,12 @@ def main():
         depths_df = pd.read_csv(
             resource(["manual_modify", "slab_fit.csv"], normal_path=True)
         )
-        final_fitted_interface = fit_slab_interface_manually(lines, depths_df)
+        extra_distances_df = pd.read_csv(
+            resource(["manual_modify", "extra_fit.csv"], normal_path=True)
+        )
+        final_fitted_interface = fit_slab_interface_manually(
+            lines, depths_df, extra_lines, extra_distances_df
+        )
         slab_interfaces = [None for _ in range(len(lines))]
 
     for i, row in lines.iterrows():

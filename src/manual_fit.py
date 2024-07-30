@@ -67,6 +67,7 @@
 
 import numpy as np
 import xarray as xr
+from obspy.geodetics import degrees2kilometers
 from pyproj import Geod
 from scipy.interpolate import PchipInterpolator, UnivariateSpline, griddata, interp1d
 from scipy.ndimage import gaussian_filter
@@ -93,42 +94,59 @@ def interpolate_points_along_line(start, end, distances):
     return points
 
 
-def fit_slab_interface_manually(coords_df, depths_df):
-    depth_levels = depths_df["depth"].values
-    num_lines = coords_df.shape[0]
-
+def fit_slab_interface_manually(coords_df, depths_df, extra_coords_df, extra_depth_df):
     all_latitudes = []
     all_longitudes = []
     all_depths = []
 
-    for line_idx in range(num_lines):
+    for line_idx in range(coords_df.shape[0]):
         start = coords_df.iloc[line_idx]["Start"]
         end = coords_df.iloc[line_idx]["End"]
         distances = depths_df.iloc[:, line_idx + 1].replace(-1, np.nan).values
         # remove all nan values
         distances = distances[~np.isnan(distances)]
 
-        # points = interpolate_points_along_line(start, end, distances)
-        # latitudes = [p[0] for p in points]
-        # longitudes = [p[1] for p in points]
-
         # Interpolate depths along each line
-        f = UnivariateSpline(depth_levels[: len(distances)], distances, k=3, s=None)
-        max_depth = np.max(depth_levels[: len(distances)])
-        dense_depth = np.linspace(0, max_depth, max_depth + 1)
-        interpolated_distances = f(dense_depth)
+        f = UnivariateSpline(
+            distances, depths_df["depth"].values[: len(distances)], k=1, s=0, ext=1
+        )
 
-        # if line_idx == 5:
-        #     for ipt in range(420, 701):
-        #         interpolated_distances[ipt] -= (ipt - 400) / 20
+        dense_distance = np.linspace(0, degrees2kilometers(config.LENGTH_DEG), 100)
+        interpolated_depths = f(dense_distance)
 
-        dense_points = interpolate_points_along_line(start, end, interpolated_distances)
+        interpolated_depths[interpolated_depths == 0] = np.nan
+
+        dense_points = interpolate_points_along_line(start, end, dense_distance)
         dense_latitudes = [p[0] for p in dense_points]
         dense_longitudes = [p[1] for p in dense_points]
 
         all_latitudes.extend(dense_latitudes)
         all_longitudes.extend(dense_longitudes)
-        all_depths.extend(dense_depth[: len(dense_latitudes)])
+        all_depths.extend(interpolated_depths)
+
+    for line_idx in range(extra_coords_df.shape[0]):
+        start = extra_coords_df.iloc[line_idx]["Start"]
+        end = extra_coords_df.iloc[line_idx]["End"]
+        distances = extra_depth_df.iloc[:, line_idx + 1].replace(-1, np.nan).values
+        # remove all nan values
+        depths = extra_depth_df["depth"].values[~np.isnan(distances)]
+        distances = distances[~np.isnan(distances)]
+
+        # Interpolate depths along each line
+        f = UnivariateSpline(distances, depths, k=1, s=0, ext=1)
+
+        dense_distance = np.linspace(0, degrees2kilometers(config.LENGTH_DEG), 200)
+        interpolated_depths = f(dense_distance)
+
+        interpolated_depths[interpolated_depths == 0] = np.nan
+
+        dense_points = interpolate_points_along_line(start, end, dense_distance)
+        dense_latitudes = [p[0] for p in dense_points]
+        dense_longitudes = [p[1] for p in dense_points]
+
+        all_latitudes.extend(dense_latitudes)
+        all_longitudes.extend(dense_longitudes)
+        all_depths.extend(interpolated_depths)
 
     # Create a grid for interpolation
     grid_lon = np.arange(
@@ -144,11 +162,11 @@ def fit_slab_interface_manually(coords_df, depths_df):
         (all_longitudes, all_latitudes),
         all_depths,
         (grid_lon, grid_lat),
-        method="nearby",
+        method="nearest",
     )
 
     # Apply Gaussian smoothing
-    # grid_depth = gaussian_filter(grid_depth, sigma=1)
+    grid_depth = gaussian_filter(grid_depth, sigma=0.5)
 
     # Create xarray DataArray
     # slab_interface = xr.DataArray(
